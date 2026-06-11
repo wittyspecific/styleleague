@@ -29,7 +29,6 @@ class AddOutfitScreen extends StatelessWidget {
           ],
         ),
         const SizedBox(height: 24),
-
         Stack(
           children: [
             const OutfitImage(height: 360, label: 'Preview'),
@@ -48,9 +47,7 @@ class AddOutfitScreen extends StatelessWidget {
             ),
           ],
         ),
-
         const SizedBox(height: 22),
-
         Container(
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
@@ -76,9 +73,7 @@ class AddOutfitScreen extends StatelessWidget {
             ],
           ),
         ),
-
         const SizedBox(height: 26),
-
         const Text(
           'Beschreibung',
           style: TextStyle(
@@ -86,9 +81,10 @@ class AddOutfitScreen extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 10),
-
         Container(
-          minHeight: 92,
+          constraints: const BoxConstraints(
+            minHeight: 92,
+          ),
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
             color: AppColors.card,
@@ -103,9 +99,7 @@ class AddOutfitScreen extends StatelessWidget {
             ),
           ),
         ),
-
         const SizedBox(height: 24),
-
         const Text(
           'Kategorie',
           style: TextStyle(
@@ -113,7 +107,6 @@ class AddOutfitScreen extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 12),
-
         Wrap(
           spacing: 10,
           runSpacing: 10,
