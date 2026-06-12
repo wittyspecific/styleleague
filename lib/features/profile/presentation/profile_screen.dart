@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 
-import '../core/services/auth_service.dart';
-import '../theme/app_colors.dart';
-import '../widgets/app_header.dart';
-import '../widgets/outfit_image.dart';
+import '../../../core/services/auth_service.dart';
+import '../../../theme/app_colors.dart';
+import '../../../widgets/app_header.dart';
+import '../../../widgets/outfit_image.dart';
+import '../data/user_repository.dart';
+import '../models/app_user.dart';
 
 class ProfileScreen extends StatelessWidget {
   const ProfileScreen({super.key});
@@ -23,11 +25,7 @@ class ProfileScreen extends StatelessWidget {
                   const CircleAvatar(
                     radius: 44,
                     backgroundColor: AppColors.black,
-                    child: Icon(
-                      Icons.person,
-                      color: Colors.white,
-                      size: 44,
-                    ),
+                    child: Icon(Icons.person, color: Colors.white, size: 44),
                   ),
                   const SizedBox(width: 18),
                   Expanded(
@@ -72,10 +70,7 @@ class ProfileScreen extends StatelessWidget {
                     style: TextStyle(fontWeight: FontWeight.w800),
                   ),
                   Spacer(),
-                  Text(
-                    '6.240',
-                    style: TextStyle(fontWeight: FontWeight.w900),
-                  ),
+                  Text('6.240', style: TextStyle(fontWeight: FontWeight.w900)),
                 ],
               ),
 
@@ -97,10 +92,7 @@ class ProfileScreen extends StatelessWidget {
                 alignment: Alignment.centerRight,
                 child: Text(
                   'Level Gold',
-                  style: TextStyle(
-                    color: AppColors.muted,
-                    fontSize: 12,
-                  ),
+                  style: TextStyle(color: AppColors.muted, fontSize: 12),
                 ),
               ),
 
@@ -134,14 +126,8 @@ class ProfileScreen extends StatelessWidget {
                 mainAxisAlignment: MainAxisAlignment.spaceAround,
                 children: const [
                   Icon(Icons.grid_view_rounded),
-                  Icon(
-                    Icons.bookmark_border_rounded,
-                    color: AppColors.muted,
-                  ),
-                  Icon(
-                    Icons.ios_share_rounded,
-                    color: AppColors.muted,
-                  ),
+                  Icon(Icons.bookmark_border_rounded, color: AppColors.muted),
+                  Icon(Icons.ios_share_rounded, color: AppColors.muted),
                 ],
               ),
 
@@ -176,10 +162,7 @@ class _ProfileStat extends StatelessWidget {
   final String value;
   final String label;
 
-  const _ProfileStat({
-    required this.value,
-    required this.label,
-  });
+  const _ProfileStat({required this.value, required this.label});
 
   @override
   Widget build(BuildContext context) {
@@ -187,16 +170,10 @@ class _ProfileStat extends StatelessWidget {
       children: [
         Text(
           value,
-          style: const TextStyle(
-            fontSize: 19,
-            fontWeight: FontWeight.w900,
-          ),
+          style: const TextStyle(fontSize: 19, fontWeight: FontWeight.w900),
         ),
         const SizedBox(height: 4),
-        Text(
-          label,
-          style: const TextStyle(color: AppColors.muted),
-        ),
+        Text(label, style: const TextStyle(color: AppColors.muted)),
       ],
     );
   }

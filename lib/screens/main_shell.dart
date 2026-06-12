@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
-import '../widgets/bottom_navigation.dart';
+
+import '../features/profile/presentation/profile_screen.dart';
+import 'add_outfit_screen.dart';
 import 'home_screen.dart';
 import 'match_screen.dart';
-import 'add_outfit_screen.dart';
 import 'ranking_screen.dart';
-import 'profile_screen.dart';
 
 class MainShell extends StatefulWidget {
   const MainShell({super.key});
@@ -14,27 +14,54 @@ class MainShell extends StatefulWidget {
 }
 
 class _MainShellState extends State<MainShell> {
-  int currentIndex = 0;
+  int _currentIndex = 0;
 
-  final pages = const [
-    HomeScreen(),
-    MatchScreen(),
-    AddOutfitScreen(),
-    RankingScreen(),
+  final List<Widget> _screens = [
+    const HomeScreen(),
+    const MatchScreen(),
+    const AddOutfitScreen(),
+    const RankingScreen(),
     ProfileScreen(),
   ];
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: SafeArea(child: pages[currentIndex]),
-      bottomNavigationBar: StyleBottomNavigation(
-        currentIndex: currentIndex,
-        onItemSelected: (index) {
+      body: IndexedStack(index: _currentIndex, children: _screens),
+      bottomNavigationBar: NavigationBar(
+        selectedIndex: _currentIndex,
+        onDestinationSelected: (index) {
           setState(() {
-            currentIndex = index;
+            _currentIndex = index;
           });
         },
+        destinations: const [
+          NavigationDestination(
+            icon: Icon(Icons.home_outlined),
+            selectedIcon: Icon(Icons.home),
+            label: 'Home',
+          ),
+          NavigationDestination(
+            icon: Icon(Icons.style_outlined),
+            selectedIcon: Icon(Icons.style),
+            label: 'Matches',
+          ),
+          NavigationDestination(
+            icon: Icon(Icons.add_circle_outline),
+            selectedIcon: Icon(Icons.add_circle),
+            label: 'Posten',
+          ),
+          NavigationDestination(
+            icon: Icon(Icons.leaderboard_outlined),
+            selectedIcon: Icon(Icons.leaderboard),
+            label: 'Ranking',
+          ),
+          NavigationDestination(
+            icon: Icon(Icons.person_outline),
+            selectedIcon: Icon(Icons.person),
+            label: 'Profil',
+          ),
+        ],
       ),
     );
   }
