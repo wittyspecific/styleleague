@@ -1,4 +1,7 @@
+import 'dart:typed_data';
+
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
 
 import '../../../theme/app_colors.dart';
 import '../../../widgets/app_header.dart';
@@ -13,6 +16,7 @@ class AddOutfitScreen extends StatefulWidget {
 
 class _AddOutfitScreenState extends State<AddOutfitScreen> {
   final OutfitRepository _outfitRepository = OutfitRepository();
+  final ImagePicker _imagePicker = ImagePicker();
   final TextEditingController _captionController = TextEditingController();
 
   final List<String> _categories = const [
@@ -26,6 +30,9 @@ class _AddOutfitScreenState extends State<AddOutfitScreen> {
   ];
 
   String _selectedCategory = 'Streetwear';
+  Uint8List? _selectedImageBytes;
+  String? _selectedImageExtension;
+
   bool _isLoading = false;
   String? _errorMessage;
 
@@ -35,7 +42,51 @@ class _AddOutfitScreenState extends State<AddOutfitScreen> {
     super.dispose();
   }
 
+  Future<void> _pickImage() async {
+    try {
+      final pickedImage = await _imagePicker.pickImage(
+        source: ImageSource.gallery,
+        imageQuality: 85,
+        maxWidth: 1600,
+      );
+
+      if (pickedImage == null) {
+        return;
+      }
+
+      final imageBytes = await pickedImage.readAsBytes();
+
+      if (imageBytes.length > 5 * 1024 * 1024) {
+        setState(() {
+          _errorMessage = 'Das Bild darf maximal 5 MB groß sein.';
+        });
+        return;
+      }
+
+      setState(() {
+        _selectedImageBytes = imageBytes;
+        _selectedImageExtension = _getExtensionFromFileName(pickedImage.name);
+        _errorMessage = null;
+      });
+    } catch (error) {
+      if (mounted) {
+        setState(() {
+          _errorMessage = 'Bild konnte nicht ausgewählt werden: $error';
+        });
+      }
+    }
+  }
+
   Future<void> _createOutfit() async {
+    final imageBytes = _selectedImageBytes;
+
+    if (imageBytes == null) {
+      setState(() {
+        _errorMessage = 'Bitte zuerst ein Bild auswählen.';
+      });
+      return;
+    }
+
     setState(() {
       _isLoading = true;
       _errorMessage = null;
@@ -45,10 +96,17 @@ class _AddOutfitScreenState extends State<AddOutfitScreen> {
       await _outfitRepository.createOutfit(
         caption: _captionController.text,
         category: _selectedCategory,
+        imageBytes: imageBytes,
+        imageExtension: _selectedImageExtension ?? 'jpg',
       );
 
       if (mounted) {
         _captionController.clear();
+
+        setState(() {
+          _selectedImageBytes = null;
+          _selectedImageExtension = null;
+        });
 
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Outfit wurde gespeichert.')),
@@ -75,6 +133,24 @@ class _AddOutfitScreenState extends State<AddOutfitScreen> {
     }
   }
 
+  String _getExtensionFromFileName(String fileName) {
+    final lowerFileName = fileName.toLowerCase();
+
+    if (lowerFileName.endsWith('.png')) {
+      return 'png';
+    }
+
+    if (lowerFileName.endsWith('.webp')) {
+      return 'webp';
+    }
+
+    if (lowerFileName.endsWith('.jpeg')) {
+      return 'jpeg';
+    }
+
+    return 'jpg';
+  }
+
   @override
   Widget build(BuildContext context) {
     return ListView(
@@ -92,42 +168,67 @@ class _AddOutfitScreenState extends State<AddOutfitScreen> {
               ),
               const SizedBox(height: 8),
               const Text(
-                'Erstelle zunächst einen einfachen Outfit-Post. Der Bild-Upload wird später ergänzt.',
+                'Wähle ein Outfit-Bild aus und ergänze Beschreibung sowie Kategorie.',
                 style: TextStyle(color: AppColors.muted, height: 1.4),
               ),
-
               const SizedBox(height: 26),
-
-              Container(
-                height: 220,
-                width: double.infinity,
-                decoration: BoxDecoration(
-                  color: AppColors.softCard,
-                  borderRadius: BorderRadius.circular(24),
-                  border: Border.all(color: Colors.black.withOpacity(0.06)),
-                ),
-                child: const Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(
-                      Icons.image_outlined,
-                      size: 54,
-                      color: AppColors.muted,
-                    ),
-                    SizedBox(height: 10),
-                    Text(
-                      'Bild-Upload folgt später',
-                      style: TextStyle(
-                        color: AppColors.muted,
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
-                  ],
+              GestureDetector(
+                onTap: _isLoading ? null : _pickImage,
+                child: Container(
+                  height: 300,
+                  width: double.infinity,
+                  decoration: BoxDecoration(
+                    color: AppColors.softCard,
+                    borderRadius: BorderRadius.circular(24),
+                    border: Border.all(color: Colors.black.withOpacity(0.06)),
+                  ),
+                  child: _selectedImageBytes == null
+                      ? const Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(
+                              Icons.add_photo_alternate_outlined,
+                              size: 58,
+                              color: AppColors.muted,
+                            ),
+                            SizedBox(height: 10),
+                            Text(
+                              'Bild auswählen',
+                              style: TextStyle(
+                                color: AppColors.muted,
+                                fontWeight: FontWeight.w800,
+                              ),
+                            ),
+                            SizedBox(height: 4),
+                            Text(
+                              'Maximal 5 MB',
+                              style: TextStyle(
+                                color: AppColors.muted,
+                                fontSize: 12,
+                              ),
+                            ),
+                          ],
+                        )
+                      : ClipRRect(
+                          borderRadius: BorderRadius.circular(24),
+                          child: Image.memory(
+                            _selectedImageBytes!,
+                            fit: BoxFit.cover,
+                            width: double.infinity,
+                            height: double.infinity,
+                          ),
+                        ),
                 ),
               ),
-
+              if (_selectedImageBytes != null) ...[
+                const SizedBox(height: 10),
+                TextButton.icon(
+                  onPressed: _isLoading ? null : _pickImage,
+                  icon: const Icon(Icons.swap_horiz_rounded),
+                  label: const Text('Anderes Bild auswählen'),
+                ),
+              ],
               const SizedBox(height: 22),
-
               DropdownButtonFormField<String>(
                 value: _selectedCategory,
                 items: _categories.map((category) {
@@ -152,9 +253,7 @@ class _AddOutfitScreenState extends State<AddOutfitScreen> {
                   border: OutlineInputBorder(),
                 ),
               ),
-
               const SizedBox(height: 16),
-
               TextField(
                 controller: _captionController,
                 enabled: !_isLoading,
@@ -173,7 +272,6 @@ class _AddOutfitScreenState extends State<AddOutfitScreen> {
                   border: OutlineInputBorder(),
                 ),
               ),
-
               if (_errorMessage != null)
                 Padding(
                   padding: const EdgeInsets.only(top: 4, bottom: 12),
@@ -185,9 +283,7 @@ class _AddOutfitScreenState extends State<AddOutfitScreen> {
                     ),
                   ),
                 ),
-
               const SizedBox(height: 12),
-
               SizedBox(
                 width: double.infinity,
                 height: 50,
@@ -202,7 +298,6 @@ class _AddOutfitScreenState extends State<AddOutfitScreen> {
                       : const Text('Outfit speichern'),
                 ),
               ),
-
               const SizedBox(height: 32),
             ],
           ),

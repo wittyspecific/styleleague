@@ -35,7 +35,7 @@ class OutfitCard extends StatelessWidget {
             username: outfit.username,
             category: outfit.category,
           ),
-          _OutfitImagePlaceholder(category: outfit.category),
+          _OutfitImage(imageUrl: outfit.imageUrl, category: outfit.category),
           Padding(
             padding: const EdgeInsets.fromLTRB(18, 16, 18, 18),
             child: Column(
@@ -134,41 +134,70 @@ class _OutfitHeader extends StatelessWidget {
   }
 }
 
-class _OutfitImagePlaceholder extends StatelessWidget {
+class _OutfitImage extends StatelessWidget {
+  final String? imageUrl;
   final String category;
 
-  const _OutfitImagePlaceholder({required this.category});
+  const _OutfitImage({required this.imageUrl, required this.category});
 
   @override
   Widget build(BuildContext context) {
+    final hasImage = imageUrl != null && imageUrl!.trim().isNotEmpty;
+
     return Container(
-      height: 390,
+      height: 430,
       width: double.infinity,
       margin: const EdgeInsets.symmetric(horizontal: 14),
       decoration: BoxDecoration(
         color: AppColors.softCard,
         borderRadius: BorderRadius.circular(24),
       ),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          const Icon(Icons.checkroom_rounded, size: 68, color: AppColors.muted),
-          const SizedBox(height: 12),
-          Text(
-            category,
-            style: const TextStyle(
-              color: AppColors.muted,
-              fontSize: 18,
-              fontWeight: FontWeight.w900,
-            ),
-          ),
-          const SizedBox(height: 4),
-          const Text(
-            'Bild-Upload folgt im nächsten Schritt',
-            style: TextStyle(color: AppColors.muted, fontSize: 13),
-          ),
-        ],
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(24),
+        child: hasImage
+            ? Image.network(
+                imageUrl!,
+                fit: BoxFit.cover,
+                width: double.infinity,
+                height: double.infinity,
+                loadingBuilder: (context, child, loadingProgress) {
+                  if (loadingProgress == null) {
+                    return child;
+                  }
+
+                  return const Center(child: CircularProgressIndicator());
+                },
+                errorBuilder: (context, error, stackTrace) {
+                  return _ImageFallback(category: category);
+                },
+              )
+            : _ImageFallback(category: category),
       ),
+    );
+  }
+}
+
+class _ImageFallback extends StatelessWidget {
+  final String category;
+
+  const _ImageFallback({required this.category});
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        const Icon(Icons.checkroom_rounded, size: 68, color: AppColors.muted),
+        const SizedBox(height: 12),
+        Text(
+          category,
+          style: const TextStyle(
+            color: AppColors.muted,
+            fontSize: 18,
+            fontWeight: FontWeight.w900,
+          ),
+        ),
+      ],
     );
   }
 }
