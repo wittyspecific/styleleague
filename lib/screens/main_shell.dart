@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 
+import '../features/outfits/presentation/add_outfit_screen.dart';
+import '../features/outfits/presentation/home_feed_screen.dart';
 import '../features/profile/presentation/profile_screen.dart';
-import 'home_screen.dart';
 import 'match_screen.dart';
 import 'ranking_screen.dart';
-import '../features/outfits/presentation/add_outfit_screen.dart';
 
 class MainShell extends StatefulWidget {
   const MainShell({super.key});
@@ -17,7 +17,7 @@ class _MainShellState extends State<MainShell> {
   int _currentIndex = 0;
 
   final List<Widget> _screens = [
-    const HomeScreen(),
+    HomeFeedScreen(),
     const MatchScreen(),
     const AddOutfitScreen(),
     const RankingScreen(),

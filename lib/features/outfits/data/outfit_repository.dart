@@ -81,12 +81,14 @@ class OutfitRepository {
   Stream<List<Outfit>> watchLatestOutfits({int limit = 20}) {
     return _firestore
         .collection('outfits')
-        .where('status', isEqualTo: 'active')
         .orderBy('createdAt', descending: true)
         .limit(limit)
         .snapshots()
         .map((snapshot) {
-          return snapshot.docs.map(Outfit.fromFirestore).toList();
+          return snapshot.docs
+              .map(Outfit.fromFirestore)
+              .where((outfit) => outfit.status == 'active')
+              .toList();
         });
   }
 }
