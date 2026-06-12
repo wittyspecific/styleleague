@@ -6,12 +6,51 @@ import '../../../widgets/app_header.dart';
 import '../../../widgets/outfit_image.dart';
 import '../data/user_repository.dart';
 import '../models/app_user.dart';
+import 'edit_profile_screen.dart';
 
 class ProfileScreen extends StatelessWidget {
-  const ProfileScreen({super.key});
+  ProfileScreen({super.key});
+
+  final UserRepository _userRepository = UserRepository();
 
   @override
   Widget build(BuildContext context) {
+    return StreamBuilder<AppUser?>(
+      stream: _userRepository.watchCurrentUser(),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Center(child: CircularProgressIndicator());
+        }
+
+        if (snapshot.hasError) {
+          return const Center(
+            child: Text('Profil konnte nicht geladen werden.'),
+          );
+        }
+
+        final user = snapshot.data;
+
+        if (user == null) {
+          return const Center(child: Text('Kein Profil gefunden.'));
+        }
+
+        return _ProfileContent(user: user);
+      },
+    );
+  }
+}
+
+class _ProfileContent extends StatelessWidget {
+  final AppUser user;
+
+  const _ProfileContent({required this.user});
+
+  @override
+  Widget build(BuildContext context) {
+    final displayName = user.displayName.trim().isNotEmpty
+        ? user.displayName
+        : user.username;
+
     return ListView(
       padding: EdgeInsets.zero,
       children: [
@@ -22,55 +61,98 @@ class ProfileScreen extends StatelessWidget {
             children: [
               Row(
                 children: [
-                  const CircleAvatar(
+                  CircleAvatar(
                     radius: 44,
                     backgroundColor: AppColors.black,
-                    child: Icon(Icons.person, color: Colors.white, size: 44),
+                    backgroundImage:
+                        user.profileImageUrl != null &&
+                            user.profileImageUrl!.trim().isNotEmpty
+                        ? NetworkImage(user.profileImageUrl!)
+                        : null,
+                    child:
+                        user.profileImageUrl == null ||
+                            user.profileImageUrl!.trim().isEmpty
+                        ? const Icon(
+                            Icons.person,
+                            color: Colors.white,
+                            size: 44,
+                          )
+                        : null,
                   ),
                   const SizedBox(width: 18),
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
-                      children: const [
+                      children: [
                         Text(
-                          'alex.style ✔',
-                          style: TextStyle(
+                          displayName,
+                          style: const TextStyle(
                             fontSize: 22,
                             fontWeight: FontWeight.w900,
                           ),
                         ),
-                        SizedBox(height: 4),
+                        const SizedBox(height: 4),
                         Text(
-                          'Berlin, Germany',
-                          style: TextStyle(color: AppColors.muted),
+                          '@${user.username}',
+                          style: const TextStyle(color: AppColors.muted),
                         ),
+                        if (user.location.trim().isNotEmpty) ...[
+                          const SizedBox(height: 4),
+                          Text(
+                            user.location,
+                            style: const TextStyle(color: AppColors.muted),
+                          ),
+                        ],
                       ],
                     ),
                   ),
                 ],
               ),
 
+              if (user.bio.trim().isNotEmpty) ...[
+                const SizedBox(height: 18),
+                Align(
+                  alignment: Alignment.centerLeft,
+                  child: Text(
+                    user.bio,
+                    style: const TextStyle(fontSize: 14, height: 1.4),
+                  ),
+                ),
+              ],
+
               const SizedBox(height: 26),
 
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceAround,
-                children: const [
-                  _ProfileStat(value: '57', label: 'Outfits'),
-                  _ProfileStat(value: '12.4K', label: 'Follower'),
-                  _ProfileStat(value: '342', label: 'Gefolgt'),
+                children: [
+                  _ProfileStat(
+                    value: user.outfitCount.toString(),
+                    label: 'Outfits',
+                  ),
+                  _ProfileStat(
+                    value: _formatNumber(user.followerCount),
+                    label: 'Follower',
+                  ),
+                  _ProfileStat(
+                    value: _formatNumber(user.followingCount),
+                    label: 'Gefolgt',
+                  ),
                 ],
               ),
 
               const SizedBox(height: 26),
 
               Row(
-                children: const [
-                  Text(
+                children: [
+                  const Text(
                     'Style Score',
                     style: TextStyle(fontWeight: FontWeight.w800),
                   ),
-                  Spacer(),
-                  Text('6.240', style: TextStyle(fontWeight: FontWeight.w900)),
+                  const Spacer(),
+                  Text(
+                    _formatNumber(user.points),
+                    style: const TextStyle(fontWeight: FontWeight.w900),
+                  ),
                 ],
               ),
 
@@ -78,21 +160,21 @@ class ProfileScreen extends StatelessWidget {
 
               ClipRRect(
                 borderRadius: BorderRadius.circular(20),
-                child: const LinearProgressIndicator(
-                  value: 0.72,
+                child: LinearProgressIndicator(
+                  value: _calculateLevelProgress(user.points),
                   minHeight: 8,
                   backgroundColor: AppColors.softCard,
-                  valueColor: AlwaysStoppedAnimation(AppColors.beige),
+                  valueColor: const AlwaysStoppedAnimation(AppColors.beige),
                 ),
               ),
 
               const SizedBox(height: 8),
 
-              const Align(
+              Align(
                 alignment: Alignment.centerRight,
                 child: Text(
-                  'Level Gold',
-                  style: TextStyle(color: AppColors.muted, fontSize: 12),
+                  'Level ${user.level}',
+                  style: const TextStyle(color: AppColors.muted, fontSize: 12),
                 ),
               ),
 
@@ -104,7 +186,13 @@ class ProfileScreen extends StatelessWidget {
                     child: _ProfileButton(
                       label: 'Profil bearbeiten',
                       filled: true,
-                      onTap: () {},
+                      onTap: () {
+                        Navigator.of(context).push(
+                          MaterialPageRoute(
+                            builder: (_) => EditProfileScreen(user: user),
+                          ),
+                        );
+                      },
                     ),
                   ),
                   const SizedBox(width: 12),
@@ -155,6 +243,32 @@ class ProfileScreen extends StatelessWidget {
         ),
       ],
     );
+  }
+
+  String _formatNumber(int value) {
+    if (value >= 1000000) {
+      return '${(value / 1000000).toStringAsFixed(1)}M';
+    }
+
+    if (value >= 1000) {
+      return '${(value / 1000).toStringAsFixed(1)}K';
+    }
+
+    return value.toString();
+  }
+
+  double _calculateLevelProgress(int points) {
+    const nextLevelPoints = 10000;
+
+    if (points <= 0) {
+      return 0;
+    }
+
+    if (points >= nextLevelPoints) {
+      return 1;
+    }
+
+    return points / nextLevelPoints;
   }
 }
 
