@@ -1,6 +1,6 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
-import '../../core/services/auth_service.dart';
 import '../../screens/main_shell.dart';
 import 'login_screen.dart';
 
@@ -9,26 +9,20 @@ class AuthGate extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final authService = AuthService();
-
-    return StreamBuilder(
-      stream: authService.authStateChanges,
+    return StreamBuilder<User?>(
+      stream: FirebaseAuth.instance.authStateChanges(),
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
           return const Scaffold(
-            body: Center(
-              child: CircularProgressIndicator(),
-            ),
+            body: Center(child: CircularProgressIndicator()),
           );
         }
 
-        final user = snapshot.data;
-
-        if (user == null) {
-          return const LoginScreen();
+        if (snapshot.hasData) {
+          return const MainShell();
         }
 
-        return const MainShell();
+        return const LoginScreen();
       },
     );
   }
