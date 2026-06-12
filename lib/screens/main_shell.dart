@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 
 import '../features/profile/presentation/profile_screen.dart';
-import 'add_outfit_screen.dart';
 import 'home_screen.dart';
 import 'match_screen.dart';
 import 'ranking_screen.dart';
+import '../features/outfits/presentation/add_outfit_screen.dart';
 
 class MainShell extends StatefulWidget {
   const MainShell({super.key});
