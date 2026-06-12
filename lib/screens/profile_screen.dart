@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+
+import '../core/services/auth_service.dart';
 import '../theme/app_colors.dart';
 import '../widgets/app_header.dart';
 import '../widgets/outfit_image.dart';
@@ -33,7 +35,7 @@ class ProfileScreen extends StatelessWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: const [
                         Text(
-                          'alex.style  ✔',
+                          'alex.style ✔',
                           style: TextStyle(
                             fontSize: 22,
                             fontWeight: FontWeight.w900,
@@ -49,7 +51,9 @@ class ProfileScreen extends StatelessWidget {
                   ),
                 ],
               ),
+
               const SizedBox(height: 26),
+
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceAround,
                 children: const [
@@ -58,7 +62,9 @@ class ProfileScreen extends StatelessWidget {
                   _ProfileStat(value: '342', label: 'Gefolgt'),
                 ],
               ),
+
               const SizedBox(height: 26),
+
               Row(
                 children: const [
                   Text(
@@ -72,33 +78,39 @@ class ProfileScreen extends StatelessWidget {
                   ),
                 ],
               ),
+
               const SizedBox(height: 9),
+
               ClipRRect(
                 borderRadius: BorderRadius.circular(20),
                 child: const LinearProgressIndicator(
                   value: 0.72,
                   minHeight: 8,
                   backgroundColor: AppColors.softCard,
-                  valueColor: AlwaysStoppedAnimation<Color>(AppColors.beige),
+                  valueColor: AlwaysStoppedAnimation(AppColors.beige),
                 ),
               ),
+
               const SizedBox(height: 8),
+
               const Align(
                 alignment: Alignment.centerRight,
                 child: Text(
-                  'Level Gold 🏆',
+                  'Level Gold',
                   style: TextStyle(
                     color: AppColors.muted,
                     fontSize: 12,
                   ),
                 ),
               ),
+
               const SizedBox(height: 24),
+
               Row(
                 children: [
                   Expanded(
                     child: _ProfileButton(
-                      label: 'Folgen',
+                      label: 'Profil bearbeiten',
                       filled: true,
                       onTap: () {},
                     ),
@@ -106,14 +118,18 @@ class ProfileScreen extends StatelessWidget {
                   const SizedBox(width: 12),
                   Expanded(
                     child: _ProfileButton(
-                      label: 'Nachricht',
+                      label: 'Logout',
                       filled: false,
-                      onTap: () {},
+                      onTap: () async {
+                        await AuthService().logout();
+                      },
                     ),
                   ),
                 ],
               ),
+
               const SizedBox(height: 26),
+
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceAround,
                 children: const [
@@ -128,7 +144,9 @@ class ProfileScreen extends StatelessWidget {
                   ),
                 ],
               ),
+
               const SizedBox(height: 18),
+
               GridView.count(
                 crossAxisCount: 3,
                 shrinkWrap: true,
@@ -144,6 +162,7 @@ class ProfileScreen extends StatelessWidget {
                   OutfitImage(height: 120, label: ''),
                 ],
               ),
+
               const SizedBox(height: 30),
             ],
           ),

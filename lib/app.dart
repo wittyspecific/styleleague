@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import 'screens/main_shell.dart';
+
+import 'features/auth/auth_gate.dart';
 import 'theme/app_theme.dart';
 
 class StyleLeagueApp extends StatelessWidget {
@@ -11,7 +12,7 @@ class StyleLeagueApp extends StatelessWidget {
       title: 'StyleLeague',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.lightTheme,
-      home: const MainShell(),
+      home: const AuthGate(),
     );
   }
 }

@@ -1,3 +1,4 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
 import '../../core/services/auth_service.dart';
@@ -31,7 +32,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
   Future<void> _register() async {
     if (!_acceptedTerms) {
       setState(() {
-        _errorMessage = 'Datenschutz und Nutzungsbedingungen müssen akzeptiert werden.';
+        _errorMessage =
+            'Datenschutz und Nutzungsbedingungen müssen akzeptiert werden.';
       });
       return;
     }
@@ -52,23 +54,54 @@ class _RegisterScreenState extends State<RegisterScreen> {
         Navigator.of(context).pop();
       }
     } on UsernameTakenException {
-      setState(() {
-        _errorMessage = 'Dieser Benutzername ist bereits vergeben.';
-      });
+      if (mounted) {
+        setState(() {
+          _errorMessage = 'Dieser Benutzername ist bereits vergeben.';
+        });
+      }
     } on FormatException catch (error) {
-      setState(() {
-        _errorMessage = error.message;
-      });
-    } catch (_) {
-      setState(() {
-        _errorMessage = 'Registrierung fehlgeschlagen. Eingaben prüfen.';
-      });
+      if (mounted) {
+        setState(() {
+          _errorMessage = error.message;
+        });
+      }
+    } on FirebaseAuthException catch (error) {
+      if (mounted) {
+        setState(() {
+          _errorMessage = _getFirebaseAuthErrorMessage(error.code);
+        });
+      }
+    } catch (error) {
+      if (mounted) {
+        setState(() {
+          _errorMessage = 'Registrierung fehlgeschlagen: $error';
+        });
+      }
     } finally {
       if (mounted) {
         setState(() {
           _isLoading = false;
         });
       }
+    }
+  }
+
+  String _getFirebaseAuthErrorMessage(String code) {
+    switch (code) {
+      case 'email-already-in-use':
+        return 'Diese E-Mail-Adresse wird bereits verwendet.';
+      case 'invalid-email':
+        return 'Die E-Mail-Adresse ist ungültig.';
+      case 'weak-password':
+        return 'Das Passwort ist zu schwach. Es muss mindestens 6 Zeichen enthalten.';
+      case 'operation-not-allowed':
+        return 'E-Mail/Passwort-Login ist in Firebase noch nicht aktiviert.';
+      case 'network-request-failed':
+        return 'Netzwerkfehler. Die Internetverbindung sollte geprüft werden.';
+      case 'user-not-created':
+        return 'Der Nutzer konnte nicht erstellt werden.';
+      default:
+        return 'Firebase-Fehler: $code';
     }
   }
 
@@ -88,6 +121,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
               children: [
                 TextField(
                   controller: _usernameController,
+                  textInputAction: TextInputAction.next,
                   decoration: const InputDecoration(
                     labelText: 'Benutzername',
                     helperText: '3–20 Zeichen: a-z, 0-9, Punkt oder Unterstrich',
@@ -98,6 +132,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 TextField(
                   controller: _emailController,
                   keyboardType: TextInputType.emailAddress,
+                  textInputAction: TextInputAction.next,
                   decoration: const InputDecoration(
                     labelText: 'E-Mail',
                     border: OutlineInputBorder(),
@@ -107,19 +142,28 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 TextField(
                   controller: _passwordController,
                   obscureText: true,
+                  textInputAction: TextInputAction.done,
+                  onSubmitted: (_) {
+                    if (!_isLoading) {
+                      _register();
+                    }
+                  },
                   decoration: const InputDecoration(
                     labelText: 'Passwort',
+                    helperText: 'Mindestens 6 Zeichen',
                     border: OutlineInputBorder(),
                   ),
                 ),
                 const SizedBox(height: 12),
                 CheckboxListTile(
                   value: _acceptedTerms,
-                  onChanged: (value) {
-                    setState(() {
-                      _acceptedTerms = value ?? false;
-                    });
-                  },
+                  onChanged: _isLoading
+                      ? null
+                      : (value) {
+                          setState(() {
+                            _acceptedTerms = value ?? false;
+                          });
+                        },
                   title: const Text(
                     'Datenschutz und Nutzungsbedingungen akzeptieren',
                   ),
